@@ -91,20 +91,17 @@ void render_node(WblNode *node, RenderState *state)
         }
         else if (child->type == WBL_ELEMENT)
         {
-            bool is_heading = strcmp(child->tag, "h1") == 0 || strcmp(child->tag, "h2") == 0 || strcmp(child->tag, "h3") == 0;
-            bool is_center = strcmp(child->tag, "center") == 0;
+            bool old_heading = state->heading;
+            bool old_center = state->center;
 
-            if (is_heading)
+            if (strcmp(child->tag, "h1") == 0 || strcmp(child->tag, "h2") == 0 || strcmp(child->tag, "h3") == 0)
                 state->heading = true;
-            else if (is_center)
+            else if (strcmp(child->tag, "center") == 0)
                 state->center = true;
 
             render_node(child, state);
-
-            if (is_heading)
-                state->heading = false;
-            else if (is_center)
-                state->center = false;
+            state->heading = old_heading;
+            state->center = old_center;
         }
     }
 }

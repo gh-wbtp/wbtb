@@ -1,4 +1,4 @@
-#include "wbl.h"
+#include "wbl/dom.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

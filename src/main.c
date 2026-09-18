@@ -1,17 +1,51 @@
+#include <string.h>
 #include <stdio.h>
-#include "wbl.h"
+#include "wbl/dom.h"
+#include "wbl/lexer.h"
 
 int main(void)
 {
+    const char *source = "<root>Hey guys! Here's a <link><url>wbtp://wbtp.flappygrant.com/png</url>link</link> to view a PNG.</root>";
+
+    WblLexerState lexer = {.source = source, .source_length = strlen(source)};
+    if (!tokenize(&lexer))
+    {
+        fprintf(stderr, "Failed to tokenize source!\n");
+        return 1;
+    }
+
+    for (u32 i = 0; i < lexer.tokens_length; i++)
+    {
+        WblToken *token = &lexer.tokens[i];
+        switch (token->type)
+        {
+        case WBLT_EOPEN:
+        {
+            printf("EOPEN -> %s\n", token->tag);
+            break;
+        }
+
+        case WBLT_ECLOSE:
+        {
+            printf("ECLOSE -> %s\n", token->tag);
+            break;
+        }
+
+        case WBLT_TEXT:
+        {
+            printf("TEXT -> \"%s\"\n", token->text);
+            break;
+        }
+
+        default:
+        {
+            fprintf(stderr, "Unknown token type! %u\n", token->type);
+            return 1;
+        }
+        }
+    }
+
     WblNode root = wbl_element("root");
-    wbl_node_append(&root, wbl_text("Hey guys! Here's a "));
-
-    WblNode *link = wbl_node_append(&root, wbl_element("link"));
-    WblNode *url = wbl_node_append(link, wbl_element("url"));
-    wbl_node_append(url, wbl_text("wbtp://wbtp.flappygrant.com/png"));
-    wbl_node_append(link, wbl_text("link"));
-
-    wbl_node_append(&root, wbl_text(" to view a PNG."));
 
     char buf[4096];
     size_t written = wbl_node_stringify(root, buf, 4096);

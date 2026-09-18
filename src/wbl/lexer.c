@@ -21,25 +21,24 @@ void lexer_free(WblLexerState *lexer)
 
 WblToken token_new(WblTokenType type, const char *tag, const char *text)
 {
+    WblToken token = {.type = type, .free = &token_free};
     if (type == WBLT_EOPEN || type == WBLT_ECLOSE)
     {
-        WblToken token = {.type = type};
         token.tag = malloc(strlen(tag) + 1);
         strcpy(token.tag, tag);
-        return token;
     }
     else if (type == WBLT_TEXT)
     {
-        WblToken token = {.type = type};
         token.text = malloc(strlen(text) + 1);
         strcpy(token.text, text);
-        return token;
     }
+
+    return token;
 }
 
 WblToken *token_append(WblLexerState *lexer, const WblToken appendee)
 {
-    WblToken token = {.type = appendee.type};
+    WblToken token = {.type = appendee.type, .free = appendee.free};
 
     if (token.type == WBLT_EOPEN || token.type == WBLT_ECLOSE)
     {
@@ -50,6 +49,20 @@ WblToken *token_append(WblLexerState *lexer, const WblToken appendee)
     {
         token.text = malloc(strlen(appendee.text) + 1);
         strcpy(token.text, appendee.text);
+    }
+
+    if (lexer->tokens_length >= lexer->tokens_cap)
+    {
+        lexer->tokens_cap *= 2;
+
+        WblToken *tokens = realloc(lexer->tokens, sizeof(WblToken) * lexer->tokens_cap);
+        if (!tokens)
+        {
+            lexer->tokens_cap /= 2;
+            return NULL;
+        }
+
+        lexer->tokens = tokens;
     }
 
     lexer->tokens[lexer->tokens_length] = token;
@@ -68,7 +81,9 @@ void flush_lit(WblLexerState *lexer, char *temp_lit, u16 *temp_li)
 
 bool tokenize(WblLexerState *lexer)
 {
-    lexer->tokens = malloc(sizeof(WblToken) * 8);
+    lexer->tokens_length = 0;
+    lexer->tokens_cap = 8;
+    lexer->tokens = malloc(sizeof(WblToken) * lexer->tokens_cap);
     lexer->free = &lexer_free;
 
     char temp_lit[4096];

@@ -1,11 +1,11 @@
 #include <string.h>
 #include <stdio.h>
-#include "wbl/dom.h"
 #include "wbl/lexer.h"
+#include "wbl/parser.h"
 
 int main(void)
 {
-    const char *source = "<root>Hey guys! Here's a <link><url>wbtp://wbtp.flappygrant.com/png</url>link</link> to view a PNG.</root>";
+    const char *source = "Hey guys! Here's a <link><url>wbtp://wbtp.flappygrant.com/png</url>link</link> to view a PNG.";
 
     WblLexerState lexer = {.source = source, .source_length = strlen(source)};
     if (!tokenize(&lexer))
@@ -14,43 +14,18 @@ int main(void)
         return 1;
     }
 
-    for (u32 i = 0; i < lexer.tokens_length; i++)
+    WblParserState parser = {.lexer = &lexer};
+    if (!parse(&parser))
     {
-        WblToken *token = &lexer.tokens[i];
-        switch (token->type)
-        {
-        case WBLT_EOPEN:
-        {
-            printf("EOPEN -> %s\n", token->tag);
-            break;
-        }
-
-        case WBLT_ECLOSE:
-        {
-            printf("ECLOSE -> %s\n", token->tag);
-            break;
-        }
-
-        case WBLT_TEXT:
-        {
-            printf("TEXT -> \"%s\"\n", token->text);
-            break;
-        }
-
-        default:
-        {
-            fprintf(stderr, "Unknown token type! %u\n", token->type);
-            return 1;
-        }
-        }
+        fprintf(stderr, "Failed to parse tokens!\n");
+        return 1;
     }
 
-    WblNode root = wbl_element("root");
-
     char buf[4096];
-    size_t written = wbl_node_stringify(root, buf, 4096);
+    size_t written = wbl_node_stringify(parser.root, buf, 4096);
     printf("%.*s\n", (int)written, buf);
 
-    root.free(&root);
+    parser.free(&parser);
+    lexer.free(&lexer);
     return 0;
 }

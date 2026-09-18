@@ -6,5 +6,5 @@ set(CMAKE_C_EXTENSIONS OFF)
 
 # Executable
 add_executable(wbtb)
-target_sources(wbtb PRIVATE src/main.c src/wbl/dom.c src/wbl/lexer.c)
+target_sources(wbtb PRIVATE src/main.c src/wbl/lexer.c src/wbl/parser.c src/wbl/ast.c)
 target_include_directories(wbtb PRIVATE include)

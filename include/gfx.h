@@ -11,6 +11,22 @@
 
 typedef struct
 {
+    u8 r, g, b;
+} WbtbtColor;
+
+typedef struct
+{
+    bool bold;
+    bool italic;
+    bool underline;
+    bool has_color;
+    WbtbtColor color;
+} WbtbtStyling;
+
+WbtbtStyling styling_empty(void);
+
+typedef struct
+{
     const char *text;
     u16 max_length;
     u8 x, y;
@@ -28,4 +44,4 @@ void terminal_setbuf(const char buf[WBTBT_HEIGHT][WBTBT_WIDTH]);
 
 void terminal_clear(void);
 
-void terminal_text(const WbtbtText text);
+void terminal_text(const WbtbtText text, const WbtbtStyling styling);

@@ -66,6 +66,7 @@ typedef struct
     u8 x, y;
     bool center;
     bool heading;
+    WbtbtStyling styling;
 } RenderState;
 
 void render_node(WblNode *node, RenderState *state)
@@ -77,31 +78,29 @@ void render_node(WblNode *node, RenderState *state)
         {
             size_t text_length = strlen(child->text);
             u8 text_x = state->center && text_length < WBTBT_WIDTH ? (WBTBT_WIDTH - text_length) / 2 : state->x;
-            terminal_text((WbtbtText){.text = child->text, .max_length = WBTBT_NOWRAP, .x = text_x, .y = state->y++});
-
-            if (state->heading)
-            {
-                char *text = malloc(text_length + 1);
-                for (u16 j = 0; j < text_length; j++)
-                    text[j] = '-';
-                text[text_length] = '\0';
-                terminal_text((WbtbtText){.text = text, .max_length = WBTBT_NOWRAP, .x = text_x, .y = state->y++});
-                free(text);
-            }
+            terminal_text((WbtbtText){.text = child->text, .max_length = WBTBT_NOWRAP, .x = text_x, .y = state->y++}, state->styling);
         }
         else if (child->type == WBL_ELEMENT)
         {
             bool old_heading = state->heading;
             bool old_center = state->center;
+            WbtbtStyling old_styling = state->styling;
 
             if (strcmp(child->tag, "h1") == 0 || strcmp(child->tag, "h2") == 0 || strcmp(child->tag, "h3") == 0)
                 state->heading = true;
             else if (strcmp(child->tag, "center") == 0)
                 state->center = true;
+            else if (strcmp(child->tag, "bold") == 0 || strcmp(child->tag, "b") == 0)
+                state->styling.bold = true;
+            else if (strcmp(child->tag, "italic") == 0 || strcmp(child->tag, "i") == 0)
+                state->styling.italic = true;
+            else if (strcmp(child->tag, "underline") == 0 || strcmp(child->tag, "u") == 0)
+                state->styling.underline = true;
 
             render_node(child, state);
             state->heading = old_heading;
             state->center = old_center;
+            state->styling = old_styling;
         }
     }
 }
@@ -137,7 +136,7 @@ int main(void)
     size_t written = wbl_node_stringify(parser.root, buf, 4095);
     buf[written] = '\0';
 
-    RenderState render_state = {.x = 0, .y = 0};
+    RenderState render_state = {.x = 0, .y = 0, .styling = styling_empty()};
     render_node(&parser.root, &render_state);
 
     while (atomic_load(&running))
